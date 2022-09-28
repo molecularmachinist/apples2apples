@@ -219,7 +219,7 @@ def create_parser():
     # Input file example.
     # The symbol # is used for comment lines.
     # The first non-empty line after these comments includes column titles.
-    # The columns are separated from eats other by pipe symbol |.
+    # The columns are separated from eachother by pipe symbol |.
     # The columns input_pdbs, selections, first_residue_index and either output_ndx or output_pdb
     # are required. In the input_pdbs at least 2 pdb files are required.
     # See  https://docs.mdanalysis.org/stable/documentation_pages/selections.html
@@ -230,7 +230,7 @@ def create_parser():
 
     input_pdbs |  selections              | first_residue_index | output_ndx | output_pdb
     1.pdb      |  segid A and resid 40:60 | 40                  | 1.ndx      | 1out.pdb
-    2.pdb     |  segid B and resid 10:55 | 10                  | 2.ndx      | 2out.pdb
+    2.pdb      |  segid B and resid 10:55 | 10                  | 2.ndx      | 2out.pdb
     3.pdb      |  protein                 | 483                 | 3.ndx      | 3out.pdb
     '''
     parser.add_argument('-i', dest='input_file', type=input_file_type, help=msg,required=True)
