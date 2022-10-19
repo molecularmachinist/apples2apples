@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from warnings import catch_warnings, simplefilter
 import MDAnalysis as mda
 
