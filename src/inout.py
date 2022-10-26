@@ -46,33 +46,43 @@ def checkinput_pdbs_type(arg: str) -> List[str]:
     return input_pdbs
 
 
-def check_required_column_titles_exits(column_titles, input_file):
+_required_columns = ['input_pdbs', 'selections', 'first_residue_index']
+_allowed_columns = {'input_pdbs', 'selections',
+                    'first_residue_index', 'output_ndx', 'output_pdb', "chain"}
 
-    column_titles_splitted = [column_title.strip()
-                              for column_title in column_titles.split('|')]
 
 def check_required_column_titles_exits(column_titles: str, input_file: str) -> Tuple[Dict[str, int], int]:
 
-    n_columns = len(column_titles_splitted)
-    if n_columns > 5:
-        msg = 'Input file \'{}\' is containing {} columns. Input file should contain at most 5 columns'.format(
+    # column_titles = [column_title.strip()
+    #                 for column_title in column_titles.split('|')]
+
+    column_titles = {column_title.strip(): i
+                     for i, column_title in enumerate(column_titles.split('|'))}
+
+    n_columns = len(column_titles)
+    if n_columns > 6:
+        msg = 'Input file \'{}\' is containing {} columns. Input file should contain at most 6 columns'.format(
             input_file, n_columns)
         raise argparse.ArgumentTypeError(msg)
 
-    for required_column_title in ['input_pdbs', 'selections', 'first_residue_index']:
-        if required_column_title not in column_titles_splitted:
+    for required_column_title in _required_columns:
+        if required_column_title not in column_titles:
 
             msg = 'Given input file \'{}\' is missing \'{}\' column.'.format(
                 input_file, required_column_title)
             raise argparse.ArgumentTypeError(msg)
 
-    if ('output_ndx' not in column_titles_splitted) and ('output_pdb' not in column_titles_splitted):
+    if ('output_ndx' not in column_titles) and ('output_pdb' not in column_titles):
         msg = 'Given input file \'{}\' is missing both columns \'output_ndx\' and \'output_pdb\'. At least one of them is required.'.format(
             input_file)
         raise argparse.ArgumentTypeError(msg)
 
-    return dict(zip(range(n_columns), column_titles_splitted)), n_columns
+    for title in column_titles:
+        if (title not in _allowed_columns):
+            msg = f'Given input file \'{input_file}\' has an unrecognized column title \'{title}\'. Allowed values are {_allowed_columns}.'
+            raise argparse.ArgumentTypeError(msg)
 
+    return column_titles, n_columns
 
 
 def read_columns_and_rows(lines: List[str], input_file: str) -> Tuple[
@@ -83,7 +93,7 @@ def read_columns_and_rows(lines: List[str], input_file: str) -> Tuple[
     column_dict, n_columns = check_required_column_titles_exits(
         lines[0], input_file)
 
-    column_dict_inv = {v: k for k, v in column_dict.items()}
+    #column_dict_inv = {v: k for k, v in column_dict.items()}
 
     n_pdbs = len(lines)-1
     if n_pdbs < 2:
@@ -105,32 +115,32 @@ def read_columns_and_rows(lines: List[str], input_file: str) -> Tuple[
             input_matrix[j].append(element)
 
     # check that input files are readable
-    input_pdbs = input_matrix[column_dict_inv['input_pdbs']]
+    input_pdbs = input_matrix[column_dict['input_pdbs']]
     for input_pdb in input_pdbs:
         is_file_readable(input_pdb)
 
     # check that output files are readable
-    if 'output_ndx' in column_dict_inv.keys():
-        output_ndxs = input_matrix[column_dict_inv['output_ndx']]
+    if 'output_ndx' in column_dict:
+        output_ndxs = input_matrix[column_dict['output_ndx']]
         for ndx in output_ndxs:
             is_file_writable(ndx)
 
     else:
         output_ndxs = None
 
-    if 'output_pdb' in column_dict_inv.keys():
-        output_pdbs = input_matrix[column_dict_inv['output_pdb']]
+    if 'output_pdb' in column_dict:
+        output_pdbs = input_matrix[column_dict['output_pdb']]
         for pdb in output_pdbs:
             is_file_writable(pdb)
     else:
         output_pdbs = None
 
     # convert first_residue_indexes to integers
-    first_residue_indexes = input_matrix[column_dict_inv['first_residue_index']]
+    first_residue_indexes = input_matrix[column_dict['first_residue_index']]
     for i in range(n_pdbs):
         try:
 
-            input_matrix[column_dict_inv['first_residue_index']
+            input_matrix[column_dict['first_residue_index']
                          ][i] = int(first_residue_indexes[i])
         except Exception as err:
             msg = 'Error occurred in \'first_residue_index\' of line {}: {}'.format(
@@ -148,7 +158,7 @@ def read_columns_and_rows(lines: List[str], input_file: str) -> Tuple[
     subsets = []
 
     i = 0
-    selections = input_matrix[column_dict_inv['selections']]
+    selections = input_matrix[column_dict['selections']]
     for pdb, sel in zip(input_pdbs, selections):
         u = mda.Universe(pdb)
 
