@@ -1,14 +1,12 @@
 from warnings import catch_warnings, simplefilter
 import MDAnalysis as mda
+import argparse
 
-from . import inout
+from . import cmd_line
 from . import apples2apples
 
 
-def main():
-    parser = inout.create_parser()
-
-    args = parser.parse_args()
+def main_align(args: argparse.Namespace):
 
     ids, universes, records, subsets, first_residue_indexes, output_ndxs, output_pdbs = args.input_file
     temp = args.temp_directory
@@ -36,3 +34,18 @@ def main():
 
             for common_sel, pdb in zip(common_sels, output_pdbs):
                 common_sel.write(pdb)
+
+
+def main_model(args: argparse.Namespace):
+    pass
+
+
+def main():
+    parser, subparsers = cmd_line.create_main_parser()
+
+    cmd_line.create_input_syntax_subparser(subparsers, func=main_align)
+    cmd_line.create_align_subparser(subparsers, func=main_align)
+    cmd_line.create_model_subparser(subparsers, func=main_model)
+
+    args = parser.parse_args()
+    args.func(args)
