@@ -1,9 +1,11 @@
+from typing import List
 import numpy as np
 import Bio.SeqIO
 from Bio.Align.Applications import ClustalOmegaCommandline
+from Bio.SeqRecord import SeqRecord
 
 
-def read_seqs_from_aligment_file(aligned_fasta_file, ids):
+def read_seqs_from_aligment_file(aligned_fasta_file: str, ids: List[str]) -> List[str]:
 
     seqs = ['' for _ in ids]
 
@@ -17,7 +19,7 @@ def read_seqs_from_aligment_file(aligned_fasta_file, ids):
     return seqs
 
 
-def aligned_sequences(ids, records, temp):
+def aligned_sequences(ids: List[str], records: List[SeqRecord], temp: str):
 
     unaligned_fasta_file = '{}/unaligned.fasta'.format(temp)
     Bio.SeqIO.write(records, unaligned_fasta_file, 'fasta')
@@ -30,7 +32,7 @@ def aligned_sequences(ids, records, temp):
     return read_seqs_from_aligment_file(aligned_fasta_file, ids)
 
 
-def find_apples2apples(seqs, indeces, not_aligned_sel):
+def find_apples2apples(seqs: List[str], indeces: List[int], not_aligned_sel: str) -> List[str]:
 
     indeces = np.asarray(indeces)
 
