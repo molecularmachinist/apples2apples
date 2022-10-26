@@ -1,12 +1,14 @@
 import argparse
+from typing import Dict, List, Tuple, Union
 import MDAnalysis as mda
+from Bio.SeqRecord import SeqRecord
 
 
 ###############################################################################################################
 # Functions to parse the input file
 ###############################################################################################################
 
-def is_file_readable(file):
+def is_file_readable(file: str):
     # Try whether the files can be read or not
 
     try:
@@ -16,7 +18,7 @@ def is_file_readable(file):
         raise argparse.ArgumentTypeError(err)
 
 
-def is_file_writable(file):
+def is_file_writable(file: str):
     # Try whether the files can be writen or not
 
     try:
@@ -26,7 +28,7 @@ def is_file_writable(file):
         raise argparse.ArgumentTypeError(err)
 
 
-def checkinput_pdbs_type(arg):
+def checkinput_pdbs_type(arg: str) -> List[str]:
 
     input_pdbs = arg.split()
 
@@ -49,6 +51,8 @@ def check_required_column_titles_exits(column_titles, input_file):
     column_titles_splitted = [column_title.strip()
                               for column_title in column_titles.split('|')]
 
+def check_required_column_titles_exits(column_titles: str, input_file: str) -> Tuple[Dict[str, int], int]:
+
     n_columns = len(column_titles_splitted)
     if n_columns > 5:
         msg = 'Input file \'{}\' is containing {} columns. Input file should contain at most 5 columns'.format(
@@ -70,7 +74,11 @@ def check_required_column_titles_exits(column_titles, input_file):
     return dict(zip(range(n_columns), column_titles_splitted)), n_columns
 
 
-def read_columns_and_rows(lines, input_file):
+
+def read_columns_and_rows(lines: List[str], input_file: str) -> Tuple[
+    List[str], List[mda.Universe], List[SeqRecord], List[mda.AtomGroup], List[int],
+    Union[List[str], None], Union[List[str], None]
+]:
 
     column_dict, n_columns = check_required_column_titles_exits(
         lines[0], input_file)
@@ -157,7 +165,7 @@ def read_columns_and_rows(lines, input_file):
     return ids, universes, records, subsets, first_residue_indexes, output_ndxs, output_pdbs
 
 
-def input_file_type(input_file):
+def input_file_type(input_file: str):
 
     is_file_readable(input_file)
 
@@ -171,7 +179,7 @@ def input_file_type(input_file):
     return read_columns_and_rows(lines, input_file)
 
 
-def temporary_directory(temp):
+def temporary_directory(temp: str):
 
     test_file = '{}/test_file.txt'.format(temp)
     try:
@@ -185,7 +193,7 @@ def temporary_directory(temp):
     return temp
 
 
-def not_aligned_selection(sel):
+def not_aligned_selection(sel: str):
     if (sel != 'backbone') and (sel != 'ca'):
         msg = 'Options are \'backbone\' and \'ca\'. You provided: {}'.format(
             sel)
@@ -195,43 +203,3 @@ def not_aligned_selection(sel):
         return 'name CA'
     else:
         return 'backbone'
-
-
-def create_parser():
-
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawTextHelpFormatter)
-
-    # input pdb files
-    #msg = 'String of two or more pdb files as an input, e.g. -i "1.pdb 2.pdb 3.pdb"'
-    msg = '''Input file with following syntax:
-
-    # Input file example.
-    # The symbol # is used for comment lines.
-    # The first non-empty line after these comments includes column titles.
-    # The columns are separated from eachother by pipe symbol |.
-    # The columns input_pdbs, selections, first_residue_index and either output_ndx or output_pdb
-    # are required. In the input_pdbs at least 2 pdb files are required.
-    # See  https://docs.mdanalysis.org/stable/documentation_pages/selections.html
-    # for syntax of the selections column. The first_residue_index column contains
-    # the residue index used in the pdb file of corresponding line.
-    # The columns output_ndx and output_pdb are to specify output files
-    # Note that the pipe symbols don't have to be align.
-
-    input_pdbs |  selections              | first_residue_index | output_ndx | output_pdb
-    1.pdb      |  segid A and resid 40:60 | 40                  | 1.ndx      | 1out.pdb
-    2.pdb      |  segid B and resid 10:55 | 10                  | 2.ndx      | 2out.pdb
-    3.pdb      |  protein                 | 483                 | 3.ndx      | 3out.pdb
-    '''
-    parser.add_argument('-i', dest='input_file',
-                        type=input_file_type, help=msg, required=True)
-
-    msg = 'temporary directory for aligment files.'
-    parser.add_argument('-t', '--temp', dest='temp_directory',
-                        type=temporary_directory, help=msg, required=True)
-
-    msg = 'Selection for atoms when aligned residues are not the same. Options are either the whole backbone \'backbone\' or the alpha-carbon atoms \'ca\'. Default is \'ca\'.'
-    parser.add_argument('-s', dest='not_aligned_sel',
-                        type=not_aligned_selection, default='ca', help=msg)
-
-    return parser
