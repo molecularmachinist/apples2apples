@@ -7,6 +7,21 @@ from Bio.SeqRecord import SeqRecord
 
 
 def read_ndx(ndx: str, verbose=False) -> Dict[str, List[int]]:
+    """
+    Read the gromacs .ndx file
+
+    Parameters:
+    -----------
+    ndx: str
+        The path to the index file
+    verbose: bool=False
+        whether to print the found group names and sizes
+
+    Returns:
+    --------
+    indexes: dict[str, list[int]]
+        A dictionary of the index groups as lists of string, with the group names as keys
+    """
     # Return empty dictionary if ndx is None
     if (ndx is None):
         return {}
@@ -43,8 +58,9 @@ def read_ndx(ndx: str, verbose=False) -> Dict[str, List[int]]:
 
 
 def is_file_readable(file: str):
-    # Try whether the files can be read or not
-
+    """
+    Make sure the file is readable. Raises an ArgumentTypeError if not.
+    """
     try:
         with open(file, 'r'):
             pass
@@ -53,8 +69,9 @@ def is_file_readable(file: str):
 
 
 def is_file_writable(file: str):
-    # Try whether the files can be writen or not
-
+    """
+    Make sure the file is writable. Raises an ArgumentTypeError if not.
+    """
     try:
         with open(file, 'w'):
             pass
@@ -71,6 +88,27 @@ __col_info = {
 
 
 def check_required_column_titles_exits(column_titles: str, input_file: str, required: str) -> Tuple[Dict[str, int], int]:
+    """
+    Checks column titles and returns a mapping of title to index.
+    Raises an ArgumentTypeError if not required title is missing or an unknown one is found.
+
+    Parameters:
+    -----------
+    column_titles: str
+        The first nonempty and noncomment line of the input file. Should have the column titles.
+    input_file: str
+        Path to the input file.
+    required: str
+        The key to get the required column name field.
+        Should be "required_align" or "required_fit" depending on the running command.
+
+    Returns:
+    --------
+    column_titles: dict[str, int]
+        A dictionary mapping the values of column names to column indexes
+    n_columns: int
+        The number of columns found
+    """
 
     column_titles = {column_title.strip(): i
                      for i, column_title in enumerate(column_titles.split('|'))}
@@ -102,6 +140,23 @@ def check_required_column_titles_exits(column_titles: str, input_file: str, requ
 
 
 def split_inputfile(lines: List[str], n_columns: int) -> Tuple[int, List[List[str]]]:
+    """
+    Split the input file into a "matrix" of list of lists of strings, where the first index is over the columns and the second over rows.
+
+    Parameters:
+    -----------
+    lines: list[str]
+        List of the lines in the input file.
+    n_columns: int
+        Number of columns in the file.
+
+    Returns:
+    --------
+    n_pdbs: int
+        number of pdb files found (number of rows)
+    input_matrix: list[list[str]]
+        The input file split into a matrix of strings
+    """
     n_pdbs = len(lines)-1
     if n_pdbs < 2:
         msg = 'At least two pdb files are required as an input. You provided only {}.'.format(
@@ -125,6 +180,23 @@ def split_inputfile(lines: List[str], n_columns: int) -> Tuple[int, List[List[st
 
 
 def read_columns_and_rows(lines: List[str], input_file: str, funcname: str):
+    """
+    Read the input file content and return a dictionary of the data.
+
+    Parameters:
+    -----------
+    lines: list[str]
+        List of the lines in the input file.
+    input_file: str
+        Path to the input file.
+    funcname: str
+        The name of the running command, should be "align" or "fit".
+
+    Returns:
+    --------
+    inputdata: dict
+        The dictionary with the input data
+    """
 
     column_dict, n_columns = check_required_column_titles_exits(
         lines[0], input_file, f"required_{funcname}")
@@ -185,6 +257,10 @@ def read_columns_and_rows(lines: List[str], input_file: str, funcname: str):
 
 
 def input_file_type(input_file: str, command: str) -> dict:
+    """
+    A file "type" for argparse. Reads and checks the given input file,
+    returning its contents as a dictionary.
+    """
 
     is_file_readable(input_file)
 
@@ -199,10 +275,19 @@ def input_file_type(input_file: str, command: str) -> dict:
 
 
 def wrap_input_file_type(command: str) -> Callable[[str], dict]:
+    """
+    A wrapper for the input_file_type, allowing to specify the command.
+    E.g. to get the input for fit, give wrap_input_file_type("fit") as a type
+    to argparse.
+    """
     return lambda input_file: input_file_type(input_file, command)
 
 
 def temporary_directory(temp: str):
+    """
+    Check that the directory is writable and raise an exception if not.
+    Returns the argument if successfull.
+    """
     temp_path = pathlib.Path(temp)
     try:
         temp_path.mkdir(exist_ok=True)
@@ -225,6 +310,9 @@ def temporary_directory(temp: str):
 
 
 def not_aligned_selection(sel: str):
+    """
+    Check that the sel is one of the two allowed possibilities, ("CA" or "backbone").
+    """
     if (sel != 'backbone') and (sel != 'ca') and (sel != 'CA'):
         msg = 'Options are \'backbone\',  \'CA\' and \'ca\'. You provided: {}'.format(
             sel)
