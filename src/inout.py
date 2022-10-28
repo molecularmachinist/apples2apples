@@ -62,24 +62,6 @@ def is_file_writable(file: str):
         raise argparse.ArgumentTypeError(err)
 
 
-def checkinput_pdbs_type(arg: str) -> List[str]:
-
-    input_pdbs = arg.split()
-
-    if len(input_pdbs) < 2:
-
-        msg = 'At least two pdb files are required as an input. You provided only {}: {}'.format(
-            len(input_pdbs), arg)
-        raise argparse.ArgumentTypeError(msg)
-
-    else:
-        # Try whether the files can be read or not
-        for input_pdb in input_pdbs:
-            is_file_readable(input_pdb)
-
-    return input_pdbs
-
-
 __col_info = {
     "required_align": ['input_pdb', 'output_ndx'],
     "required_fit": ['input_pdb', "input_xtc", 'output_ndx', 'output_traj'],
