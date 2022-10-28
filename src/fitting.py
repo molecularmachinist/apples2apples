@@ -8,7 +8,24 @@ from MDAnalysis.analysis import align
 
 
 def fit_pos(pos: np.ndarray, ref: np.ndarray) -> Tuple[
-        np.ndarray, np.ndarray]:
+        np.ndarray, float]:
+    """
+    Do translational and rotational fitting of pos to ref
+
+    Parameters:
+    -----------
+    pos: ndarray
+        Positions to translate and rotate. Should have the same shape as ref.
+    ref: ndarray
+        The reference structure.
+
+    Returns:
+    --------
+    newpos: ndarray
+        The fitted positions
+    rmsd:
+        RMSD after the fit
+    """
     pos_c = pos.mean(axis=0)
     ref_c = ref.mean(axis=0)
 
@@ -25,11 +42,29 @@ def fit_and_write(univs: Dict[str, mda.Universe],
                   outtrajs: Dict[str, str],
                   ref_frame: int,
                   ref_key: str
-                  ) -> Tuple[
-        Dict[str, mda.AtomGroup],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray]]:
-    trjs = {}
+                  ) -> Dict[str, np.ndarray]:
+    """
+    Reads the trajectories of the universes in univs, fits them onto the reference structure
+    and writes them to outtrajs. All dictionary parameters should have the same keys.
+
+    Parameters:
+    -----------
+    univs: dict[str, Universe]
+        A dictionary of the universes/systems to fit and write
+    ndxs: dict[str, list[int]]
+        A dictionary of the index groups to write, as lists of ints
+    outtrajs: dict[str, str]
+        A dictionary of the output trajectory file names
+    ref_frame: int
+        The frame of the reference system to use as a reference
+    ref_key: str
+        The key of the reference system
+
+    Returns:
+    --------
+    rmsds: dict[str, ndarray]
+        A dictionary of numpy arrays with the rmsd values for each frame.
+    """
     rmsd = {}
     sels = {key: univs[key].atoms[np.array(ndxs[key])-1] for key in univs}
     univs[ref_key].trajectory[ref_frame]
@@ -59,7 +94,10 @@ def fit_and_write(univs: Dict[str, mda.Universe],
 def write_to_files(sels: Dict[str, mda.AtomGroup],
                    trajs: Dict[str, np.ndarray],
                    outtrajs: Dict[str, str]):
-
+    """
+    DEPRECATED
+    If no need arises, will be removed
+    """
     for key in trajs:
         trj = trajs[key]
         sel = sels[key]
