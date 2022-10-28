@@ -57,7 +57,7 @@ def main_fit(args: argparse.Namespace):
         ndxs[pdb] += inout.read_ndx(ndx)["apples2apples"]
 
     print("Starting to read and write trajectories, translating and rotating for minimum RMSD fit")
-    rmsds = fitting.load_to_memory(
+    rmsds = fitting.fit_and_write(
         universes, ndxs, input_data["output_traj"],
         args.ref_frame, ref_key=input_data["input_pdb"][0])
 

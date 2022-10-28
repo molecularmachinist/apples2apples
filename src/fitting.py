@@ -6,6 +6,8 @@ import numpy as np
 import MDAnalysis as mda
 from MDAnalysis.analysis import align
 
+from . import utils
+
 
 def fit_pos(pos: np.ndarray, ref: np.ndarray) -> Tuple[
         np.ndarray, np.ndarray]:
@@ -20,11 +22,12 @@ def fit_pos(pos: np.ndarray, ref: np.ndarray) -> Tuple[
     return newpos, rmsd
 
 
-def load_to_memory(univs: Dict[str, mda.Universe],
-                   ndxs: Dict[str, List[int]],
-                   ref_frame: int,
-                   ref_key: str
-                   ) -> Tuple[
+def fit_and_write(univs: Dict[str, mda.Universe],
+                  ndxs: Dict[str, List[int]],
+                  outtrajs: Dict[str, str],
+                  ref_frame: int,
+                  ref_key: str
+                  ) -> Tuple[
         Dict[str, mda.AtomGroup],
         Dict[str, np.ndarray],
         Dict[str, np.ndarray]]:
@@ -33,13 +36,26 @@ def load_to_memory(univs: Dict[str, mda.Universe],
     sels = {key: univs[key].atoms[np.array(ndxs[key])-1] for key in univs}
     univs[ref_key].trajectory[ref_frame]
     ref_pos = sels[ref_key].positions
-    for key in univs:
+    for j, key in enumerate(univs):
         u = univs[key]
         sel = sels[key]
-        res = [fit_pos(sel.positions, ref_pos) for ts in u.trajectory]
-        trjs[key] = np.array([pos.flatten() for pos, _ in res])
-        rmsd[key] = np.array([rmsd for _, rmsd in res])
-    return sels, trjs, rmsd
+        rmsd[key] = np.empty(len(u.trajectory))
+        len_trj = len(u.trajectory)
+        num_sys = len(univs)
+        with mda.Writer(outtrajs[key], n_atoms=sel.n_atoms) as w:
+            for i, ts in enumerate(u.trajectory):
+                sel.positions, rmsd[key][i] = fit_pos(sel.positions, ref_pos)
+                if (i == 0):
+                    sel.write(str(
+                        pathlib.Path(outtrajs[key]).with_suffix(".pdb")))
+                    sel.write(str(
+                        pathlib.Path(outtrajs[key]).with_suffix(".ndx")),
+                        name='apples2apples')
+                print(f"trajectory {j+1}/{num_sys}: {i+1}/{len_trj}", end="\r")
+                w.write(sel)
+            print("")
+
+    return rmsd
 
 
 def write_to_files(sels: Dict[str, mda.AtomGroup],
