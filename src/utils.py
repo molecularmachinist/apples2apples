@@ -2,6 +2,15 @@ from typing import List
 
 
 def ordinal_str(i: int) -> str:
+    """
+    Return the integer parameter i as a string with the correct ordinal ending.
+    e.g.
+    1  -> "1st"
+    2  -> "2nd"
+    5  -> "5th"
+    11 -> "11th"
+    21 -> "21st"
+    """
     last_dig = i % 10
     second_to_last = (i//10) % 10
     if (second_to_last != 1):
@@ -15,6 +24,11 @@ def ordinal_str(i: int) -> str:
 
 
 def compressed_resid_list(resids: List[str]) -> str:
+    """
+    Takes a list of ints and returns the compressed ranges. Does not sort the input.
+    e.g.
+    [1,2,3,4,6,8,9,10] -> " 1:4 6 8:10"
+    """
     if (len(resids) == 0):
         return ""
     out = ""
