@@ -11,6 +11,9 @@ def create_main_parser() -> Tuple[argparse.ArgumentParser, argparse._SubParsersA
     parser = argparse.ArgumentParser(
         prog="apples2apples", description=description, epilog=epilog)
 
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Unsilence warnings such as missing attributes when writing PDB files.")
+
     msg = "Specify what the program should do. Only one command should be given per run. 'apples2apples <cmd> -h' to get command specific option."
     subparsers = parser.add_subparsers(description=msg)
     subparsers.required = True
@@ -99,7 +102,7 @@ def create_model_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> 
     parser.add_argument('-r', '--ref', metavar="N", dest='ref_frame',
                         type=inout.temporary_directory, help=msg, default=".")
 
-    msg = "Only do the min RMSD fit of the trajectories. This only makes sense if 'output_traj's are given"
+    msg = "Only do the min RMSD fit of the trajectories. If 'output_traj's are not given this command does the fits, but only prints RMSD info."
     parser.add_argument('--fit-only', dest='fit_only',
                         action="store_true", help=msg)
 
