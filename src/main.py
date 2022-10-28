@@ -15,8 +15,7 @@ def main_align(args: argparse.Namespace):
     temp = args.temp_directory
     not_aligned_sel = args.not_aligned_sel
 
-    seqs = apples2apples.aligned_sequences(
-        input_data["id"], input_data["record"], temp)
+    seqs = apples2apples.aligned_sequences(input_data["record"], temp)
 
     resids = [[r.resid for r in sel.residues] for sel in input_data["subset"]]
 
