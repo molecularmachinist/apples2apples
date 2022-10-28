@@ -82,7 +82,7 @@ def checkinput_pdbs_type(arg: str) -> List[str]:
 
 __col_info = {
     "required_align": ['input_pdb', 'output_ndx'],
-    "required_model": ['input_pdb', "input_xtc", 'output_ndx'],
+    "required_fit": ['input_pdb', "input_xtc", 'output_ndx', 'output_traj'],
     "allowed_columns": {'input_pdb', "input_xtc", 'selection',
                         'first_residue_index', 'output_ndx', 'output_traj', 'output_pdb'}
 }

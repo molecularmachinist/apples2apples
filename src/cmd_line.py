@@ -36,10 +36,10 @@ def create_input_syntax_subparser(subparsers: argparse._SubParsersAction, **kwar
 # the residue index used in the pdb file of corresponding line.
 # The columns output_ndx and output_pdb are to specify output files
 # Note that the pipe symbols don't have to be aligned.
-# The below line marks which columns are used by which command, a=align and m=model.
+# The below line marks which columns are used by which command, a=align and f=fit.
 # Added asterisk means its required for that command
 
-# a* m*   | m*        |  a  m                    | a                   | a* m*      | a          | m
+# a* f*   | f*        |  a  f                    | a                   | a* f*      | a          | f*
 
 input_pdb | input_xtc |  selection               | first_residue_index | output_ndx | output_pdb | output_traj
 1.pdb     | 1.pdb     |  segid A and resid 40:60 | 40                  | 1.ndx      | 1out.pdb   | 1aligned.xtc
@@ -49,7 +49,7 @@ input_pdb | input_xtc |  selection               | first_residue_index | output_
 
     kwargs["func"] = lambda args: print(syntax, file=args.fout)
 
-    help = "Print an example of the input file for the align and model commands."
+    help = "Print an example of the input file for the align and fit commands."
     parser = subparsers.add_parser("input_syntax", help=help, description=help)
 
     msg = 'File to write the example syntax to. By default standard output.'
@@ -87,24 +87,20 @@ def create_align_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> 
     return parser
 
 
-def create_model_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> argparse.ArgumentParser:
-    help = "Fit sequences (in space) and train ML models.\nIn other words, compare apples to oranges."
-    parser = subparsers.add_parser("model", help=help, description=help)
+def create_fit_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> argparse.ArgumentParser:
+    help = "Fit trajectories (in space).\nIn other words, put apples on oranges in preparation for comparison of apples to oranges."
+    parser = subparsers.add_parser("fit", help=help, description=help)
 
     msg = "Input file. For the example syntax run 'apples2apples input_syntax'. " \
           "NOTE that in this case the index file inputs will be read from the 'output_ndx' " \
           "columns, as these are where the align command wrote its output."
     parser.add_argument('-i', metavar="FNAME", dest='input_file',
-                        type=inout.wrap_input_file_type("model"),
+                        type=inout.wrap_input_file_type("fit"),
                         help=msg, required=True)
 
     msg = 'Reference frame used for the alignment. The reference is taken from the first pdb listed in the input.'
     parser.add_argument('-r', '--ref', metavar="N", dest='ref_frame',
                         type=inout.temporary_directory, help=msg, default=".")
-
-    msg = "Only do the min RMSD fit of the trajectories. If 'output_traj's are not given this command does the fits, but only prints RMSD info."
-    parser.add_argument('--fit-only', dest='fit_only',
-                        action="store_true", help=msg)
 
     parser.set_defaults(ref_frame=0, **kwargs)
 
