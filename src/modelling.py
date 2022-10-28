@@ -49,7 +49,8 @@ def write_to_files(sels: Dict[str, mda.AtomGroup],
         sel = sels[key]
         sel.positions = trj[0].reshape((-1, 3))
         sel.write(str(pathlib.Path(outtrajs[key]).with_suffix(".pdb")))
-        sel.write(str(pathlib.Path(outtrajs[key]).with_suffix(".ndx")))
+        sel.write(str(pathlib.Path(outtrajs[key]).with_suffix(".ndx")),
+                  name='apples2apples')
         with mda.Writer(outtrajs[key], n_atoms=trj.shape[1]) as w:
             for arr in trj:
                 sel.positions = arr.reshape(-1, 3)
