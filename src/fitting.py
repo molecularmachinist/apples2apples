@@ -6,8 +6,6 @@ import numpy as np
 import MDAnalysis as mda
 from MDAnalysis.analysis import align
 
-from . import utils
-
 
 def fit_pos(pos: np.ndarray, ref: np.ndarray) -> Tuple[
         np.ndarray, np.ndarray]:
