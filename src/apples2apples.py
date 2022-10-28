@@ -28,7 +28,7 @@ def aligned_sequences(records: List[SeqRecord], temp: str):
 
     Parameters
     ----------
-    records: list
+    records: list[SeqRecord]
         A list of SeqRecord objects, which are the sequences to align
     temp: str
         The path to a directory to use for the temporary fasta files.
@@ -37,7 +37,7 @@ def aligned_sequences(records: List[SeqRecord], temp: str):
 
     Returns
     -------
-    sequences: list
+    sequences: list[str]
         list of strings, where each string is a single sequence after the alignment.
     """
 
@@ -53,6 +53,24 @@ def aligned_sequences(records: List[SeqRecord], temp: str):
 
 
 def find_apples2apples(seqs: List[str], resids: List[List[int]], not_aligned_sel: str) -> List[str]:
+    """
+    Find the MDAnalysis selection strings from the aligned sequences, which will results in atom
+    selections of the same size.
+
+    Parameters:
+    -----------
+    seqs: list[str]
+        List of the aligned sequences, each as a single string
+    resids: list[list[int]]
+        List of the lists of resids for each sequence
+    not_aligned_sel: str
+        A string to use as a selection for the residues that are aligned, but do not match
+
+    Returns:
+    --------
+    sels: list[str]
+        list of the selection strings for each sequence
+    """
 
     indeces = np.zeros(len(seqs), dtype=int)
 
