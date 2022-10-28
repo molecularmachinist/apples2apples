@@ -28,6 +28,8 @@ def main_align(args: argparse.Namespace):
         common_sels.append(common_sel)
         print(f"{utils.ordinal_str(i+1)} sequence: "
               f"{len(subset)} atoms -> {len(common_sel)} atoms")
+        if (args.print_sels):
+            print(sel)
 
     print("Writing output index files")
     for common_sel, ndx_file in zip(common_sels, input_data["output_ndx"]):
@@ -54,9 +56,10 @@ def main_fit(args: argparse.Namespace):
     for pdb, ndx in zip(input_data["input_pdb"], input_data["output_ndx"]):
         ndxs[pdb] += inout.read_ndx(ndx)["apples2apples"]
 
-    print("Loading trajectories to memory and translating and rotating for minimum RMSD fit")
-    sels, coords, rmsds = fitting.load_to_memory(
-        universes, ndxs, args.ref_frame, ref_key=input_data["input_pdb"][0])
+    print("Starting to read and write trajectories, translating and rotating for minimum RMSD fit")
+    rmsds = fitting.load_to_memory(
+        universes, ndxs, input_data["output_traj"],
+        args.ref_frame, ref_key=input_data["input_pdb"][0])
 
     print()
     for key in rmsds:
@@ -65,9 +68,6 @@ def main_fit(args: argparse.Namespace):
                "mean=%.4f, std=%.4f\n") % (
             key, rmsds[key].min(), rmsds[key].max(),
             rmsds[key].mean(), rmsds[key].std()))
-
-    print("Writing trajectories to file")
-    fitting.write_to_files(sels, coords, input_data["output_traj"])
 
 
 def main():
