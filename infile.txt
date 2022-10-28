@@ -11,7 +11,7 @@
 
 
 
- input_pdbs                               |  selections                | first_residue_index | output_ndx         | output_pdb
- input_files/5weo_after_charmm.pdb        |  resid 655:790             | 655				 | output_files/1.ndx | output_files/1out.pdb
+ input_pdb                                |  selection                 | first_residue_index | output_ndx         | output_pdb
+ input_files/5weo_after_charmm.pdb        |  resid 655:790             | 655                 | output_files/1.ndx | output_files/1out.pdb
  input_files/7eo_final_homology_model.pdb |  segid B and resid 639:777 | 639                 | output_files/2.ndx | output_files/2out.pdb
  input_files/7eo_final_homology_model.pdb |  segid C and resid 639:777 | 639                 | output_files/3.ndx | output_files/3out.pdb

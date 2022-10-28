@@ -1,4 +1,5 @@
 import argparse
+import sys
 from typing import Tuple
 
 from . import inout
@@ -19,29 +20,39 @@ def create_main_parser() -> Tuple[argparse.ArgumentParser, argparse._SubParsersA
 
 
 def create_input_syntax_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> argparse.ArgumentParser:
-    msg = '''
+    syntax = '''
 # Input file example.
 # The symbol # is used for comment lines.
 # The first non-empty line after these comments includes column titles.
 # The columns are separated from eachother by pipe symbol |.
-# The columns input_pdbs, selections, first_residue_index and either output_ndx or output_pdb
+# The columns input_pdbs, first_residue_index and output_ndx
 # are required. In the input_pdbs at least 2 pdb files are required.
+# If selections are not given, they are assumed to be "all".
 # See  https://docs.mdanalysis.org/stable/documentation_pages/selections.html
 # for syntax of the selections column. The first_residue_index column contains
 # the residue index used in the pdb file of corresponding line.
 # The columns output_ndx and output_pdb are to specify output files
 # Note that the pipe symbols don't have to be aligned.
+# The below line marks which columns are used by which command, a=align and m=model.
+# Added asterisk means its required for that command
 
-input_pdbs |  selections              | first_residue_index | output_ndx | output_pdb
-1.pdb      |  segid A and resid 40:60 | 40                  | 1.ndx      | 1out.pdb
-2.pdb      |  segid B and resid 10:55 | 10                  | 2.ndx      | 2out.pdb
-3.pdb      |  protein                 | 483                 | 3.ndx      | 3out.pdb
+# a* m*   | m*        |  a  m                    | a                   | a* m*      | a          | m
+
+input_pdb | input_xtc |  selection               | first_residue_index | output_ndx | output_pdb | output_traj
+1.pdb     | 1.pdb     |  segid A and resid 40:60 | 40                  | 1.ndx      | 1out.pdb   | 1aligned.xtc
+2.pdb     | 2.pdb     |  segid B and resid 10:55 | 10                  | 2.ndx      | 2out.pdb   | 2aligned.xtc
+3.pdb     | 3.pdb     |  protein                 | 483                 | 3.ndx      | 3out.pdb   | 3aligned.xtc
     '''
 
-    kwargs["func"] = lambda args: print(msg)
+    kwargs["func"] = lambda args: print(syntax, file=args.fout)
 
     help = "Print an example of the input file for the align and model commands."
     parser = subparsers.add_parser("input_syntax", help=help, description=help)
+
+    msg = 'File to write the example syntax to. By default standard output.'
+    parser.add_argument('-o', metavar="FNAME", dest='fout',
+                        type=argparse.FileType("w"),
+                        default=sys.stdout, help=msg)
 
     parser.set_defaults(**kwargs)
 
@@ -53,16 +64,20 @@ def create_align_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> 
     parser = subparsers.add_parser("align", help=help, description=help)
 
     msg = "Input file. For the example syntax run 'apples2apples input_syntax'."
-    parser.add_argument('-i', dest='input_file',
-                        type=inout.input_file_type, help=msg, required=True)
+    parser.add_argument('-i', metavar="FNAME", dest='input_file',
+                        type=inout.wrap_input_file_type("align"),
+                        help=msg, required=True)
 
-    msg = 'temporary directory for aligment files.'
-    parser.add_argument('-t', '--temp', dest='temp_directory',
-                        type=inout.temporary_directory, help=msg, required=True)
+    msg = 'Temporary directory for aligment files.'
+    parser.add_argument('-t', '--temp', metavar="DIR", dest='temp_directory',
+                        type=inout.temporary_directory, help=msg, default=".")
 
-    msg = 'Selection for atoms when aligned residues are not the same. Options are either the whole backbone \'backbone\' or the alpha-carbon atoms \'ca\'. Default is \'ca\'.'
-    parser.add_argument('-s', dest='not_aligned_sel',
-                        type=inout.not_aligned_selection, default='ca', help=msg)
+    msg = "Selection for atoms when aligned residues are not the same. " \
+          "Options are either the whole backbone \'backbone\' or the " \
+          "alpha-carbon atoms \'CA\'. Default is \'CA\'."
+    parser.add_argument('-s', metavar="CA|backbone", dest='not_aligned_sel',
+                        type=inout.not_aligned_selection,
+                        default='ca', help=msg)
 
     parser.set_defaults(**kwargs)
 
@@ -74,11 +89,20 @@ def create_model_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> 
     parser = subparsers.add_parser("model", help=help, description=help)
 
     msg = "Input file. For the example syntax run 'apples2apples input_syntax'. " \
-          "NOTE that in this case the real inputs will be read from the 'output' columns, " \
-          "as these are where the align command wrote its output."
-    parser.add_argument('-i', dest='input_file',
-                        type=inout.input_file_type, help=msg, required=True)
+          "NOTE that in this case the index file inputs will be read from the 'output_ndx' " \
+          "columns, as these are where the align command wrote its output."
+    parser.add_argument('-i', metavar="FNAME", dest='input_file',
+                        type=inout.wrap_input_file_type("model"),
+                        help=msg, required=True)
 
-    parser.set_defaults(**kwargs)
+    msg = 'Reference frame used for the alignment. The reference is taken from the first pdb listed in the input.'
+    parser.add_argument('-r', '--ref', metavar="N", dest='ref_frame',
+                        type=inout.temporary_directory, help=msg, default=".")
+
+    msg = "Only do the min RMSD fit of the trajectories. This only makes sense if 'output_traj's are given"
+    parser.add_argument('--fit-only', dest='fit_only',
+                        action="store_true", help=msg)
+
+    parser.set_defaults(ref_frame=0, **kwargs)
 
     return parser
