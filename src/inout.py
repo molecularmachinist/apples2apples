@@ -84,7 +84,7 @@ __col_info = {
     "required_align": ['input_pdb', 'output_ndx'],
     "required_fit": ['input_pdb', "input_xtc", 'output_ndx', 'output_traj'],
     "allowed_columns": {'input_pdb', "input_xtc", 'selection',
-                        'first_residue_index', 'output_ndx', 'output_traj', 'output_pdb'}
+                        'output_ndx', 'output_traj', 'output_pdb'}
 }
 
 
@@ -198,19 +198,6 @@ def read_columns_and_rows(lines: List[str], input_file: str, funcname: str):
     inputdata["univ"] = univs
     inputdata["subset"] = subsets
     inputdata["record"] = records
-
-    # convert first_residue_indexes to integers or get from selections
-    if ("first_residue_index" in column_dict):
-        for i in range(n_pdbs):
-            try:
-                inputdata["first_residue_index"][i] = int(
-                    inputdata["first_residue_index"][i])
-            except Exception as err:
-                msg = 'Error occurred in \'first_residue_index\' of line {}: {}'.format(
-                    i+1, err)
-                raise argparse.ArgumentTypeError(msg)
-    else:
-        inputdata["first_residue_index"] = [sel[0].resid for sel in subsets]
 
     return inputdata
 
