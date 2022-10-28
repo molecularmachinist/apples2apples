@@ -32,19 +32,19 @@ def create_input_syntax_subparser(subparsers: argparse._SubParsersAction, **kwar
 # are required. In the input_pdbs at least 2 pdb files are required.
 # If selections are not given, they are assumed to be "all".
 # See  https://docs.mdanalysis.org/stable/documentation_pages/selections.html
-# for syntax of the selections column. The first_residue_index column contains
-# the residue index used in the pdb file of corresponding line.
-# The columns output_ndx and output_pdb are to specify output files
+# for syntax of the selections column.
+# The columns output_ndx and output_pdb are to specify output files in alignment,
+# while the former is used as input in fitting.
 # Note that the pipe symbols don't have to be aligned.
 # The below line marks which columns are used by which command, a=align and f=fit.
 # Added asterisk means its required for that command
 
-# a* f*   | f*        |  a  f                    | a                   | a* f*      | a          | f*
+# a* f*   | f*        |  a  f                    | a* f*      | a          | f*
 
-input_pdb | input_xtc |  selection               | first_residue_index | output_ndx | output_pdb | output_traj
-1.pdb     | 1.pdb     |  segid A and resid 40:60 | 40                  | 1.ndx      | 1out.pdb   | 1aligned.xtc
-2.pdb     | 2.pdb     |  segid B and resid 10:55 | 10                  | 2.ndx      | 2out.pdb   | 2aligned.xtc
-3.pdb     | 3.pdb     |  protein                 | 483                 | 3.ndx      | 3out.pdb   | 3aligned.xtc
+input_pdb | input_xtc |  selection               | output_ndx | output_pdb | output_traj
+1.pdb     | 1.pdb     |  segid A and resid 40:60 | 1.ndx      | 1out.pdb   | 1aligned.xtc
+2.pdb     | 2.pdb     |  segid B and resid 10:55 | 2.ndx      | 2out.pdb   | 2aligned.xtc
+3.pdb     | 3.pdb     |  protein                 | 3.ndx      | 3out.pdb   | 3aligned.xtc
     '''
 
     kwargs["func"] = lambda args: print(syntax, file=args.fout)
