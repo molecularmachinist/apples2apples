@@ -10,6 +10,14 @@ from . import utils
 
 
 def main_align(args: argparse.Namespace):
+    """
+    Main function for the align command
+
+    Parameters:
+    -----------
+    args: Namespace
+        the argparse Namespace that has all commandline options
+    """
 
     input_data = args.input_file
     temp = args.temp_directory
@@ -42,6 +50,14 @@ def main_align(args: argparse.Namespace):
 
 
 def main_fit(args: argparse.Namespace):
+    """
+    Main function for the fit command
+
+    Parameters:
+    -----------
+    args: Namespace
+        the argparse Namespace that has all commandline options
+    """
 
     input_data = args.input_file
     universes = input_data["univ"]
@@ -70,6 +86,9 @@ def main_fit(args: argparse.Namespace):
 
 
 def main():
+    """
+    Main function of the program
+    """
     parser, subparsers = cmd_line.create_main_parser()
 
     cmd_line.create_input_syntax_subparser(subparsers)
