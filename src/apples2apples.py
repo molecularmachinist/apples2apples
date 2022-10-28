@@ -23,6 +23,23 @@ def read_seqs_from_aligment_file(aligned_fasta_file: str) -> List[str]:
 
 
 def aligned_sequences(records: List[SeqRecord], temp: str):
+    """
+    Takes the list of the sequences, aligns them and returns the alignment results as a list of strings.
+
+    Parameters
+    ----------
+    records: list
+        A list of SeqRecord objects, which are the sequences to align
+    temp: str
+        The path to a directory to use for the temporary fasta files.
+        The fasta files will be named unaligned.fasta and aligned.fast
+        and will not be removed when done.
+
+    Returns
+    -------
+    sequences: list
+        list of strings, where each string is a single sequence after the alignment.
+    """
 
     unaligned_fasta_file = '{}/unaligned.fasta'.format(temp)
     Bio.SeqIO.write(records, unaligned_fasta_file, 'fasta')
