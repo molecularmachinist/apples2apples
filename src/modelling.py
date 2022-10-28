@@ -1,8 +1,10 @@
-import pathlib
 from typing import Dict, List, Tuple, Union
+
+import pathlib
+import numpy as np
+
 import MDAnalysis as mda
 from MDAnalysis.analysis import align
-import numpy as np
 
 
 def fit_pos(pos: np.ndarray, ref: np.ndarray) -> Tuple[
