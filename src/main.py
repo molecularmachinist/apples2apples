@@ -31,9 +31,6 @@ def main_align(args: argparse.Namespace):
             ndx.write(common_sel, name='apples2apples')
 
     if input_data["output_pdb"] is not None:
-        with catch_warnings():
-            simplefilter("ignore", category=(DeprecationWarning, UserWarning))
-
             for common_sel, pdb in zip(common_sels, input_data["output_pdb"]):
                 common_sel.write(pdb)
 
@@ -77,4 +74,10 @@ def main():
     cmd_line.create_model_subparser(subparsers, func=main_model)
 
     args = parser.parse_args()
+
+    if (not args.verbose):
+        with catch_warnings():
+            simplefilter("ignore", category=(DeprecationWarning, UserWarning))
+            args.func(args)
+    else:
     args.func(args)
