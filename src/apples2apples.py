@@ -7,21 +7,22 @@ from Bio.SeqRecord import SeqRecord
 from . import utils
 
 
-def read_seqs_from_aligment_file(aligned_fasta_file: str, ids: List[str]) -> List[str]:
-
-    seqs = ['' for _ in ids]
-    i_seq = -1
+def read_seqs_from_aligment_file(aligned_fasta_file: str) -> List[str]:
+    """
+    Reads sequences from 'aligned_fasta_file'. Returns a list of each sequence as a single string.
+    """
+    seqs = []
     with open(aligned_fasta_file, 'r') as file:
         for line in file:
             if line[:4] == '>pdb':
-                i_seq += 1
+                seqs.append("")
             else:
-                # [:-1] to remove \n from the end of the line
-                seqs[i_seq] += line[:-1]
+                # strip to remove \n from the end of the line
+                seqs[-1] += line.strip()
     return seqs
 
 
-def aligned_sequences(ids: List[str], records: List[SeqRecord], temp: str):
+def aligned_sequences(records: List[SeqRecord], temp: str):
 
     unaligned_fasta_file = '{}/unaligned.fasta'.format(temp)
     Bio.SeqIO.write(records, unaligned_fasta_file, 'fasta')
@@ -31,7 +32,7 @@ def aligned_sequences(ids: List[str], records: List[SeqRecord], temp: str):
         infile=unaligned_fasta_file, outfile=aligned_fasta_file, verbose=True, auto=True, force=True)
     clustalomega_cline()
 
-    return read_seqs_from_aligment_file(aligned_fasta_file, ids)
+    return read_seqs_from_aligment_file(aligned_fasta_file)
 
 
 def find_apples2apples(seqs: List[str], resids: List[List[int]], not_aligned_sel: str) -> List[str]:
