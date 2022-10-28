@@ -6,6 +6,7 @@ from . import cmd_line
 from . import inout
 from . import apples2apples
 from . import fitting
+from . import utils
 
 
 def main_align(args: argparse.Namespace):
@@ -17,20 +18,24 @@ def main_align(args: argparse.Namespace):
     seqs = apples2apples.aligned_sequences(
         input_data["id"], input_data["record"], temp)
 
-    indeces = [i-1 for i in input_data["first_residue_index"]]
+    resids = [[r.resid for r in sel.residues] for sel in input_data["subset"]]
 
-    sels = apples2apples.find_apples2apples(seqs, indeces, not_aligned_sel)
+    sels = apples2apples.find_apples2apples(seqs, resids, not_aligned_sel)
 
     common_sels = []
-    for sel, subset in zip(sels, input_data["subset"]):
+    for i, (sel, subset) in enumerate(zip(sels, input_data["subset"])):
         common_sel = subset.select_atoms(sel)
         common_sels.append(common_sel)
+        print(f"{utils.ordinal_str(i+1)} sequence: "
+              f"{len(subset)} atoms -> {len(common_sel)} atoms")
 
+    print("Writing output index files")
     for common_sel, ndx_file in zip(common_sels, input_data["output_ndx"]):
         with mda.selections.gromacs.SelectionWriter(ndx_file, mode='w') as ndx:
             ndx.write(common_sel, name='apples2apples')
 
     if input_data["output_pdb"] is not None:
+        print("Writing output pdbs")
         for common_sel, pdb in zip(common_sels, input_data["output_pdb"]):
             common_sel.write(pdb)
 
