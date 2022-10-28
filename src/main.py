@@ -5,7 +5,7 @@ import argparse
 from . import cmd_line
 from . import inout
 from . import apples2apples
-from . import modelling
+from . import fitting
 
 
 def main_align(args: argparse.Namespace):
@@ -35,7 +35,7 @@ def main_align(args: argparse.Namespace):
             common_sel.write(pdb)
 
 
-def main_model(args: argparse.Namespace):
+def main_fit(args: argparse.Namespace):
 
     input_data = args.input_file
     universes = input_data["univ"]
@@ -50,7 +50,7 @@ def main_model(args: argparse.Namespace):
         ndxs[pdb] += inout.read_ndx(ndx)["apples2apples"]
 
     print("Loading trajectories to memory and translating and rotating for minimum RMSD fit")
-    sels, coords, rmsds = modelling.load_to_memory(
+    sels, coords, rmsds = fitting.load_to_memory(
         universes, ndxs, args.ref_frame, ref_key=input_data["input_pdb"][0])
 
     print()
@@ -61,9 +61,8 @@ def main_model(args: argparse.Namespace):
             key, rmsds[key].min(), rmsds[key].max(),
             rmsds[key].mean(), rmsds[key].std()))
 
-    if (input_data["output_traj"]):
-        print("Writing trajectories to file")
-        modelling.write_to_files(sels, coords, input_data["output_traj"])
+    print("Writing trajectories to file")
+    fitting.write_to_files(sels, coords, input_data["output_traj"])
 
 
 def main():
@@ -71,7 +70,7 @@ def main():
 
     cmd_line.create_input_syntax_subparser(subparsers)
     cmd_line.create_align_subparser(subparsers, func=main_align)
-    cmd_line.create_model_subparser(subparsers, func=main_model)
+    cmd_line.create_fit_subparser(subparsers, func=main_fit)
 
     args = parser.parse_args()
 
