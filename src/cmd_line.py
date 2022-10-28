@@ -82,6 +82,10 @@ def create_align_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> 
                         type=inout.not_aligned_selection,
                         default='ca', help=msg)
 
+    parser.add_argument("-p", "--print-selections",
+                        dest="print_sels", action="store_true",
+                        help="Print the selections to stdout.")
+
     parser.set_defaults(**kwargs)
 
     return parser
