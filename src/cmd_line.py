@@ -6,6 +6,9 @@ from . import inout
 
 
 def create_main_parser() -> Tuple[argparse.ArgumentParser, argparse._SubParsersAction]:
+    """
+    Create the main parser of the program and a subparser for it.
+    """
     description = "apples2apples: A tool for comparing apples to oranges."
     epilog = "For more detailed explanations, see the README.md"
     parser = argparse.ArgumentParser(
@@ -23,6 +26,9 @@ def create_main_parser() -> Tuple[argparse.ArgumentParser, argparse._SubParsersA
 
 
 def create_input_syntax_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> argparse.ArgumentParser:
+    """
+    Create the subparser for the input_syntax command. **kwargs are added to set_defaults
+    """
     syntax = '''
 # Input file example.
 # The symbol # is used for comment lines.
@@ -63,6 +69,9 @@ input_pdb | input_xtc |  selection               | output_ndx | output_pdb | out
 
 
 def create_align_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> argparse.ArgumentParser:
+    """
+    Create the subparser for the align command. **kwargs are added to set_defaults
+    """
     help = "Align sequences and find common atoms.\nIn other words, find out how to compare apples to oranges."
     parser = subparsers.add_parser("align", help=help, description=help)
 
@@ -92,6 +101,9 @@ def create_align_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> 
 
 
 def create_fit_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> argparse.ArgumentParser:
+    """
+    Create the subparser for the fit command. **kwargs are added to set_defaults
+    """
     help = "Fit trajectories (in space).\nIn other words, put apples on oranges in preparation for comparison of apples to oranges."
     parser = subparsers.add_parser("fit", help=help, description=help)
 
