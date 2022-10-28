@@ -1,12 +1,46 @@
 import argparse
-from typing import Dict, List, Tuple, Union
+import os
+import pathlib
+from typing import Callable, Dict, List, Tuple, Union
 import MDAnalysis as mda
 from Bio.SeqRecord import SeqRecord
 
 
+def read_ndx(ndx: str, verbose=False) -> Dict[str, List[int]]:
+    # Return empty dictionary if ndx is None
+    if (ndx is None):
+        return {}
+    if verbose:
+        print("\nReading index groups from %s" % ndx)
+    indexes = {}
+    groups = []
+    current = None
+
+    with open(ndx) as f:
+        for line in f:
+            line = line.strip()
+            if (line.startswith("[") and line.endswith("]")):
+                current = line[1:-1].strip()
+                indexes[current] = []
+                groups.append(current)
+                continue
+            parts = line.split()
+            for i in parts:
+                indexes[current].append(int(i))
+
+    if (verbose):
+        print("Found %d groups" % len(groups))
+        print("    %-20s%10s\n" % ("Group name", "atoms"))
+        for i, g in enumerate(groups):
+            print("%2d. %-20s%10d" % (i+1, g, len(indexes[g])))
+
+        print()
+    return indexes
+
 ###############################################################################################################
 # Functions to parse the input file
 ###############################################################################################################
+
 
 def is_file_readable(file: str):
     # Try whether the files can be read or not
@@ -46,15 +80,15 @@ def checkinput_pdbs_type(arg: str) -> List[str]:
     return input_pdbs
 
 
-_required_columns = ['input_pdbs', 'selections', 'first_residue_index']
-_allowed_columns = {'input_pdbs', 'selections',
-                    'first_residue_index', 'output_ndx', 'output_pdb', "chain"}
+__col_info = {
+    "required_align": ['input_pdb', 'output_ndx'],
+    "required_model": ['input_pdb', "input_xtc", 'output_ndx'],
+    "allowed_columns": {'input_pdb', "input_xtc", 'selection',
+                        'first_residue_index', 'output_ndx', 'output_traj', 'output_pdb'}
+}
 
 
-def check_required_column_titles_exits(column_titles: str, input_file: str) -> Tuple[Dict[str, int], int]:
-
-    # column_titles = [column_title.strip()
-    #                 for column_title in column_titles.split('|')]
+def check_required_column_titles_exits(column_titles: str, input_file: str, required: str) -> Tuple[Dict[str, int], int]:
 
     column_titles = {column_title.strip(): i
                      for i, column_title in enumerate(column_titles.split('|'))}
@@ -65,7 +99,7 @@ def check_required_column_titles_exits(column_titles: str, input_file: str) -> T
             input_file, n_columns)
         raise argparse.ArgumentTypeError(msg)
 
-    for required_column_title in _required_columns:
+    for required_column_title in __col_info[required]:
         if required_column_title not in column_titles:
 
             msg = 'Given input file \'{}\' is missing \'{}\' column.'.format(
@@ -78,23 +112,14 @@ def check_required_column_titles_exits(column_titles: str, input_file: str) -> T
         raise argparse.ArgumentTypeError(msg)
 
     for title in column_titles:
-        if (title not in _allowed_columns):
-            msg = f'Given input file \'{input_file}\' has an unrecognized column title \'{title}\'. Allowed values are {_allowed_columns}.'
+        if (title not in __col_info["allowed_columns"]):
+            msg = f'Given input file \'{input_file}\' has an unrecognized column title \'{title}\'. Allowed values are {__col_info["allowed_columns"]}.'
             raise argparse.ArgumentTypeError(msg)
 
     return column_titles, n_columns
 
 
-def read_columns_and_rows(lines: List[str], input_file: str) -> Tuple[
-    List[str], List[mda.Universe], List[SeqRecord], List[mda.AtomGroup], List[int],
-    Union[List[str], None], Union[List[str], None]
-]:
-
-    column_dict, n_columns = check_required_column_titles_exits(
-        lines[0], input_file)
-
-    #column_dict_inv = {v: k for k, v in column_dict.items()}
-
+def split_inputfile(lines: List[str], n_columns: int) -> Tuple[int, List[List[str]]]:
     n_pdbs = len(lines)-1
     if n_pdbs < 2:
         msg = 'At least two pdb files are required as an input. You provided only {}.'.format(
@@ -107,75 +132,90 @@ def read_columns_and_rows(lines: List[str], input_file: str) -> Tuple[
         line_splitted = [columns.strip() for columns in line.split('|')]
 
         if len(line_splitted) != n_columns:
-            msg = 'Given input file \'{}\' contains {} columns, but line of {}th pdb in the given input file contains {} columns.'.format(
-                input_file, n_columns, i+1, len(line_splitted))
+            msg = 'Given input file contains {} columns, but line of {}th pdb in the given input file contains {} columns.'.format(
+                n_columns, i+1, len(line_splitted))
             raise argparse.ArgumentTypeError(msg)
 
         for j, element in enumerate(line_splitted):
             input_matrix[j].append(element)
 
+    return n_pdbs, input_matrix
+
+
+def read_columns_and_rows(lines: List[str], input_file: str, funcname: str):
+
+    column_dict, n_columns = check_required_column_titles_exits(
+        lines[0], input_file, f"required_{funcname}")
+
+    n_pdbs, input_matrix = split_inputfile(lines, n_columns)
+
     # check that input files are readable
-    input_pdbs = input_matrix[column_dict['input_pdbs']]
+    input_pdbs = input_matrix[column_dict['input_pdb']]
     for input_pdb in input_pdbs:
         is_file_readable(input_pdb)
 
-    # check that output files are readable
-    if 'output_ndx' in column_dict:
-        output_ndxs = input_matrix[column_dict['output_ndx']]
-        for ndx in output_ndxs:
-            is_file_writable(ndx)
+    inputdata = {}
+    for key in __col_info['allowed_columns']:
+        if (key in column_dict):
+            inputdata[key] = input_matrix[column_dict[key]]
+        else:
+            inputdata[key] = None
 
-    else:
-        output_ndxs = None
-
-    if 'output_pdb' in column_dict:
-        output_pdbs = input_matrix[column_dict['output_pdb']]
-        for pdb in output_pdbs:
-            is_file_writable(pdb)
-    else:
-        output_pdbs = None
-
-    # convert first_residue_indexes to integers
-    first_residue_indexes = input_matrix[column_dict['first_residue_index']]
+    inputdata["id"] = []
     for i in range(n_pdbs):
-        try:
+        inputdata["id"].append('pdb{}'.format(i+1))
 
-            input_matrix[column_dict['first_residue_index']
-                         ][i] = int(first_residue_indexes[i])
-        except Exception as err:
-            msg = 'Error occurred in \'first_residue_index\' of line {}: {}'.format(
-                i+1, err)
-            raise argparse.ArgumentTypeError(msg)
+    # These are needed as dicts
+    for key in ("input_xtc", "output_traj"):
+        if key in column_dict:
+            inputdata[key] = {pdb: trj for pdb, trj in zip(
+                input_pdbs, inputdata[key])}
 
-    # creat universes and use selection strings
+    # set selections to "all" if needed
+    if inputdata["selection"] is None:
+        inputdata["selection"] = ["all" for p in input_pdbs]
 
-    ids = []
-    for i in range(n_pdbs):
-        ids.append('pdb{}'.format(i+1))
-
-    universes = []
+    # create universes and use selection strings
+    univs = {}
     records = []
     subsets = []
+    for i, (pdb, sel) in enumerate(zip(input_pdbs, inputdata["selection"])):
+        if (pdb not in univs):
+            univs[pdb] = mda.Universe(pdb)
 
-    i = 0
-    selections = input_matrix[column_dict['selections']]
-    for pdb, sel in zip(input_pdbs, selections):
-        u = mda.Universe(pdb)
-
-        universes.append(u)
+        u = univs[pdb]
 
         subset = u.select_atoms(sel)
+        if (len(subset) == 0):
+            msg = 'Selection of line {} ("{}") is empty'.format(
+                i+1, sel)
+            raise argparse.ArgumentTypeError(msg)
         subsets.append(subset)
 
-        record = subset.residues.sequence(id=ids[i])
+        record = subset.residues.sequence(id=inputdata["id"][i])
         records.append(record)
 
-        i += 1
+    inputdata["univ"] = univs
+    inputdata["subset"] = subsets
+    inputdata["record"] = records
 
-    return ids, universes, records, subsets, first_residue_indexes, output_ndxs, output_pdbs
+    # convert first_residue_indexes to integers or get from selections
+    if ("first_residue_index" in column_dict):
+        for i in range(n_pdbs):
+            try:
+                inputdata["first_residue_index"][i] = int(
+                    inputdata["first_residue_index"][i])
+            except Exception as err:
+                msg = 'Error occurred in \'first_residue_index\' of line {}: {}'.format(
+                    i+1, err)
+                raise argparse.ArgumentTypeError(msg)
+    else:
+        inputdata["first_residue_index"] = [sel[0].resid for sel in subsets]
+
+    return inputdata
 
 
-def input_file_type(input_file: str):
+def input_file_type(input_file: str, command: str) -> dict:
 
     is_file_readable(input_file)
 
@@ -183,20 +223,32 @@ def input_file_type(input_file: str):
 
         lines = []
         for line in file:
-            if line.strip() and (line.lstrip()[0] != "#"):
+            if line.strip() and (not line.lstrip().startswith("#")):
                 lines.append(line)
 
-    return read_columns_and_rows(lines, input_file)
+    return read_columns_and_rows(lines, input_file, command)
+
+
+def wrap_input_file_type(command: str) -> Callable[[str], dict]:
+    return lambda input_file: input_file_type(input_file, command)
 
 
 def temporary_directory(temp: str):
-
-    test_file = '{}/test_file.txt'.format(temp)
+    temp_path = pathlib.Path(temp)
     try:
-        with open(test_file, 'w'):
-            pass
+        temp_path.mkdir(exist_ok=True)
     except Exception as err:
-        msg = 'Error occurred while trying to write a test file to the given temporary directory: {}'.format(
+        msg = 'Error occurred while trying to make sure temporary directory exists: {}\nMake sure its parents exist and are writable'.format(
+            err)
+        raise argparse.ArgumentTypeError(msg)
+
+    test_file = temp_path / f'apples2apples_test_file_{os.getpid()}.txt'
+    try:
+        with test_file.open('w'):
+            pass
+        os.remove(test_file)
+    except Exception as err:
+        msg = 'Error occurred while trying to write and remove a test file in the given temporary directory: {}'.format(
             err)
         raise argparse.ArgumentTypeError(msg)
 
@@ -204,12 +256,12 @@ def temporary_directory(temp: str):
 
 
 def not_aligned_selection(sel: str):
-    if (sel != 'backbone') and (sel != 'ca'):
-        msg = 'Options are \'backbone\' and \'ca\'. You provided: {}'.format(
+    if (sel != 'backbone') and (sel != 'ca') and (sel != 'CA'):
+        msg = 'Options are \'backbone\',  \'CA\' and \'ca\'. You provided: {}'.format(
             sel)
         raise argparse.ArgumentTypeError(msg)
 
-    if sel == 'ca':
-        return 'name CA'
-    else:
+    if sel == 'backbone':
         return 'backbone'
+    else:
+        return 'name CA'
