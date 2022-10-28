@@ -31,8 +31,8 @@ def main_align(args: argparse.Namespace):
             ndx.write(common_sel, name='apples2apples')
 
     if input_data["output_pdb"] is not None:
-            for common_sel, pdb in zip(common_sels, input_data["output_pdb"]):
-                common_sel.write(pdb)
+        for common_sel, pdb in zip(common_sels, input_data["output_pdb"]):
+            common_sel.write(pdb)
 
 
 def main_model(args: argparse.Namespace):
@@ -80,4 +80,4 @@ def main():
             simplefilter("ignore", category=(DeprecationWarning, UserWarning))
             args.func(args)
     else:
-    args.func(args)
+        args.func(args)
