@@ -33,7 +33,7 @@ def create_input_syntax_subparser(subparsers: argparse._SubParsersAction, **kwar
 # Input file example.
 # The symbol # is used for comment lines.
 # The first non-empty line after these comments includes column titles.
-# The columns are separated from eachother by pipe symbol |.
+# The columns are separated from each other by pipe symbol |.
 # The columns input_pdbs, first_residue_index and output_ndx
 # are required. In the input_pdbs at least 2 pdb files are required.
 # If selections are not given, they are assumed to be "all".
@@ -48,9 +48,9 @@ def create_input_syntax_subparser(subparsers: argparse._SubParsersAction, **kwar
 # a* f*   | f*        |  a                       | a* f*      | a          | f*
 
 input_pdb | input_xtc |  selection               | output_ndx | output_pdb | output_traj
-1.pdb     | 1.pdb     |  segid A and resid 40:60 | 1.ndx      | 1out.pdb   | 1aligned.xtc
-2.pdb     | 2.pdb     |  segid B and resid 10:55 | 2.ndx      | 2out.pdb   | 2aligned.xtc
-3.pdb     | 3.pdb     |  protein                 | 3.ndx      | 3out.pdb   | 3aligned.xtc
+1.pdb     | 1.xtc     |  segid A and resid 40:60 | 1.ndx      | 1out.pdb   | 1aligned.xtc
+2.pdb     | 2.xtc     |  segid B and resid 10:55 | 2.ndx      | 2out.pdb   | 2aligned.xtc
+3.pdb     | 3.xtc     |  protein                 | 3.ndx      | 3out.pdb   | 3aligned.xtc
     '''
 
     kwargs["func"] = lambda args: print(syntax, file=args.fout)
