@@ -45,7 +45,7 @@ def create_input_syntax_subparser(subparsers: argparse._SubParsersAction, **kwar
 # The below line marks which columns are used by which command, a=align and f=fit.
 # Added asterisk means its required for that command
 
-# a* f*   | f*        |  a  f                    | a* f*      | a          | f*
+# a* f*   | f*        |  a                       | a* f*      | a          | f*
 
 input_pdb | input_xtc |  selection               | output_ndx | output_pdb | output_traj
 1.pdb     | 1.pdb     |  segid A and resid 40:60 | 1.ndx      | 1out.pdb   | 1aligned.xtc
