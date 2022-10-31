@@ -20,5 +20,8 @@ Just run
 ```sh
 pip install .
 ```
-in the project root. This will install all dependencies and compile and install the package.
+in the project root. This will install all dependencies and install the package. The command line tool should now be runnable as 
+```sh
+apples2apples [command] [options]
+```
 
