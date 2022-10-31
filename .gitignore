@@ -4,3 +4,5 @@ output_files
 test_systems
 
 __pycache__
+build
+*.egg-info
