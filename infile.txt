@@ -1,17 +1,18 @@
-# Input file format example.
+# Input file example.
 # The symbol # is used for comment lines.
-# The first non-empty line after these comments includes column titles. 
-# The columns are separated from eats other by symbol |.
-# The columns input_pdbs, selections, first_residue_index and either output_ndx or output_pdb
+# The first non-empty line after these comments includes column titles.
+# The columns are separated from eachother by pipe symbol |.
+# The columns input_pdbs, first_residue_index and output_ndx
 # are required. In the input_pdbs at least 2 pdb files are required.
-# See  https://docs.mdanalysis.org/stable/documentation_pages/selections.html 
-# for syntax of the selections column. The first_residue_index column contains
-# the residue index used in the pdb file of corresponding line. 
-# The columns output_ndx and output_pdb are to spedicy output files
+# If selections are not given, they are assumed to be "all".
+# See  https://docs.mdanalysis.org/stable/documentation_pages/selections.html
+# for syntax of the selections column.
+# The columns output_ndx and output_pdb are to specify output files in alignment,
+# while the former is used as input in fitting.
+# Note that the pipe symbols don't have to be aligned.
+# The below line marks which columns are used by which command, a=align and f=fit.
+# Added asterisk means its required for that command
 
-
-
- input_pdb                                |  selection                 | first_residue_index | output_ndx         | output_pdb
- input_files/5weo_after_charmm.pdb        |  resid 655:790             | 655                 | output_files/1.ndx | output_files/1out.pdb
- input_files/7eo_final_homology_model.pdb |  segid B and resid 639:777 | 639                 | output_files/2.ndx | output_files/2out.pdb
- input_files/7eo_final_homology_model.pdb |  segid C and resid 639:777 | 639                 | output_files/3.ndx | output_files/3out.pdb
+ input_pdb            | input_xtc            | selection | output_ndx            | output_traj
+ input_files/ampa.pdb | input_files/ampa.xtc | chainID A | output_files/ampa.ndx | output_files/ampa_fitted.xtc
+ input_files/nmda.pdb | input_files/nmda.xtc | chainID B | output_files/nmda.ndx | output_files/nmda_fitted.xtc
