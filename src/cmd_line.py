@@ -5,7 +5,8 @@ from typing import Tuple
 from . import inout
 
 
-def create_main_parser() -> Tuple[argparse.ArgumentParser, argparse._SubParsersAction]:
+def create_main_parser() -> Tuple[argparse.ArgumentParser,
+                                  "argparse._SubParsersAction[argparse.ArgumentParser]"]:
     """
     Create the main parser of the program and a subparser for it.
     """
@@ -25,7 +26,8 @@ def create_main_parser() -> Tuple[argparse.ArgumentParser, argparse._SubParsersA
     return parser, subparsers
 
 
-def create_input_syntax_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> argparse.ArgumentParser:
+def create_input_syntax_subparser(subparsers: "argparse._SubParsersAction[argparse.ArgumentParser]",
+                                  **kwargs) -> argparse.ArgumentParser:
     """
     Create the subparser for the input_syntax command. **kwargs are added to set_defaults
     """
@@ -68,7 +70,8 @@ input_pdb | input_xtc |  selection               | output_ndx | output_pdb | out
     return parser
 
 
-def create_align_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> argparse.ArgumentParser:
+def create_align_subparser(subparsers: "argparse._SubParsersAction[argparse.ArgumentParser]",
+                           **kwargs) -> argparse.ArgumentParser:
     """
     Create the subparser for the align command. **kwargs are added to set_defaults
     """
@@ -100,7 +103,8 @@ def create_align_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> 
     return parser
 
 
-def create_fit_subparser(subparsers: argparse._SubParsersAction, **kwargs) -> argparse.ArgumentParser:
+def create_fit_subparser(subparsers: "argparse._SubParsersAction[argparse.ArgumentParser]",
+                         **kwargs) -> argparse.ArgumentParser:
     """
     Create the subparser for the fit command. **kwargs are added to set_defaults
     """
