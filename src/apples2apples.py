@@ -1,3 +1,4 @@
+import pathlib
 from typing import List
 import numpy as np
 import Bio.SeqIO
@@ -7,12 +8,12 @@ from Bio.SeqRecord import SeqRecord
 from . import utils
 
 
-def read_seqs_from_aligment_file(aligned_fasta_file: str) -> List[str]:
+def read_seqs_from_aligment_file(aligned_fasta_file: pathlib.Path) -> List[str]:
     """
     Reads sequences from 'aligned_fasta_file'. Returns a list of each sequence as a single string.
     """
     seqs = []
-    with open(aligned_fasta_file, 'r') as file:
+    with aligned_fasta_file.open('r') as file:
         for line in file:
             if line[:4] == '>pdb':
                 seqs.append("")
@@ -22,7 +23,7 @@ def read_seqs_from_aligment_file(aligned_fasta_file: str) -> List[str]:
     return seqs
 
 
-def aligned_sequences(records: List[SeqRecord], temp: str):
+def aligned_sequences(records: List[SeqRecord], temp: pathlib.Path):
     """
     Takes the list of the sequences, aligns them and returns the alignment results as a list of strings.
 
@@ -41,12 +42,15 @@ def aligned_sequences(records: List[SeqRecord], temp: str):
         list of strings, where each string is a single sequence after the alignment.
     """
 
-    unaligned_fasta_file = '{}/unaligned.fasta'.format(temp)
+    unaligned_fasta_file = temp / "unaligned.fasta"
     Bio.SeqIO.write(records, unaligned_fasta_file, 'fasta')
 
-    aligned_fasta_file = '{}/aligned.fasta'.format(temp)
-    clustalomega_cline = ClustalOmegaCommandline(
-        infile=unaligned_fasta_file, outfile=aligned_fasta_file, verbose=True, auto=True, force=True)
+    aligned_fasta_file = temp / "aligned.fasta"
+    clustalomega_cline = ClustalOmegaCommandline(infile=unaligned_fasta_file,
+                                                 outfile=aligned_fasta_file,
+                                                 verbose=True,
+                                                 auto=True,
+                                                 force=True)
     clustalomega_cline()
 
     return read_seqs_from_aligment_file(aligned_fasta_file)

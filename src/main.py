@@ -40,12 +40,21 @@ def main_align(args: argparse.Namespace):
 
     print("Writing output index files")
     for common_sel, ndx_file in zip(common_sels, input_data["output_ndx"]):
-        with mda.selections.gromacs.SelectionWriter(ndx_file, mode='w') as ndx:
-            ndx.write(common_sel, name='apples2apples')
+        if (args.make_dirs):
+            ndx_file.parent.mkdir(parents=True, exist_ok=True)
+        elif (not ndx_file.parent.is_dir()):
+            raise FileNotFoundError(f"Parent directory of {ndx_file} does not "
+                                    "exists, but \"--no-mkdir\" was given.")
+        common_sel.write(str(ndx_file), name='apples2apples')
 
     if input_data["output_pdb"] is not None:
         print("Writing output pdbs")
         for common_sel, pdb in zip(common_sels, input_data["output_pdb"]):
+            if (args.make_dirs):
+                pdb.parent.mkdir(parents=True, exist_ok=True)
+            elif (not pdb.parent.is_dir()):
+                raise FileNotFoundError(f"Parent directory of {pdb} does not "
+                                        "exists, but \"--no-mkdir\" was given.")
             common_sel.write(pdb)
 
 
@@ -64,7 +73,7 @@ def main_fit(args: argparse.Namespace):
     trajs = input_data["input_xtc"]
     print("Loading trajectories into universes")
     for pdb in universes:
-        universes[pdb].load_new(trajs[pdb])
+        universes[pdb].load_new(str(trajs[pdb]))
 
     ndxs = {pdb: [] for pdb in universes}
     print("Making selections")
@@ -72,9 +81,12 @@ def main_fit(args: argparse.Namespace):
         ndxs[pdb] += inout.read_ndx(ndx)["apples2apples"]
 
     print("Starting to read and write trajectories, translating and rotating for minimum RMSD fit")
-    rmsds = fitting.fit_and_write(
-        universes, ndxs, input_data["output_traj"],
-        args.ref_frame, ref_key=input_data["input_pdb"][0])
+    rmsds = fitting.fit_and_write(univs=universes,
+                                  ndxs=ndxs,
+                                  outtrajs=input_data["output_traj"],
+                                  ref_frame=args.ref_frame,
+                                  ref_key=input_data["input_pdb"][0],
+                                  make_dirs=args.make_dirs)
 
     print()
     for key in rmsds:

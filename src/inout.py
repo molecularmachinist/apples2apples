@@ -6,7 +6,7 @@ import MDAnalysis as mda
 from Bio.SeqRecord import SeqRecord
 
 
-def read_ndx(ndx: str, verbose=False) -> Dict[str, List[int]]:
+def read_ndx(ndx: pathlib.Path, verbose=False) -> Dict[str, List[int]]:
     """
     Read the gromacs .ndx file
 
@@ -31,7 +31,7 @@ def read_ndx(ndx: str, verbose=False) -> Dict[str, List[int]]:
     groups = []
     current = None
 
-    with open(ndx) as f:
+    with ndx.open() as f:
         for line in f:
             line = line.strip()
             if (line.startswith("[") and line.endswith("]")):
@@ -57,37 +57,45 @@ def read_ndx(ndx: str, verbose=False) -> Dict[str, List[int]]:
 ###############################################################################################################
 
 
-def is_file_readable(file: str):
+def is_file_readable(file: pathlib.Path):
     """
     Make sure the file is readable. Raises an ArgumentTypeError if not.
+    Returns the input parameter unchanged.
     """
     try:
-        with open(file, 'r'):
+        with file.open('r'):
             pass
     except Exception as err:
         raise argparse.ArgumentTypeError(err)
+    return file
 
 
-def is_file_writable(file: str):
+def is_file_writable(file: pathlib.Path, ):
     """
     Make sure the file is writable. Raises an ArgumentTypeError if not.
+    Returns the input parameter unchanged.
     """
     try:
-        with open(file, 'w'):
+        file.parent.mkdir(parents=True, exist_ok=True)
+        with file.open('w'):
             pass
     except Exception as err:
         raise argparse.ArgumentTypeError(err)
+    return file
 
 
 __col_info = {
     "required_align": ['input_pdb', 'output_ndx'],
     "required_fit": ['input_pdb', "input_xtc", 'output_ndx', 'output_traj'],
     "allowed_columns": {'input_pdb', "input_xtc", 'selection',
-                        'output_ndx', 'output_traj', 'output_pdb'}
+                        'output_ndx', 'output_traj', 'output_pdb'},
+    "used_align": {'input_pdb', 'selection', 'output_ndx', 'output_pdb'},
+    "used_fit": {'input_pdb', "input_xtc", 'output_ndx', 'output_traj'},
+    "paths": {"input_pdb", "input_xtc", "output_ndx", "output_pdb", "output_traj"}
 }
 
 
-def check_required_column_titles_exits(column_titles: str, input_file: str, required: str) -> Tuple[Dict[str, int], int]:
+def check_required_column_titles_exits(column_titles: str, input_file: pathlib.Path, required: str) -> Tuple[Dict[str, int], int]:
     """
     Checks column titles and returns a mapping of title to index.
     Raises an ArgumentTypeError if not required title is missing or an unknown one is found.
@@ -96,7 +104,7 @@ def check_required_column_titles_exits(column_titles: str, input_file: str, requ
     -----------
     column_titles: str
         The first nonempty and noncomment line of the input file. Should have the column titles.
-    input_file: str
+    input_file: Path
         Path to the input file.
     required: str
         The key to get the required column name field.
@@ -115,20 +123,17 @@ def check_required_column_titles_exits(column_titles: str, input_file: str, requ
 
     n_columns = len(column_titles)
     if n_columns > 6:
-        msg = 'Input file \'{}\' is containing {} columns. Input file should contain at most 6 columns'.format(
-            input_file, n_columns)
+        msg = f'Input file \'{input_file}\' is containing {n_columns} columns. Input file should contain at most 6 columns'
         raise argparse.ArgumentTypeError(msg)
 
     for required_column_title in __col_info[required]:
         if required_column_title not in column_titles:
 
-            msg = 'Given input file \'{}\' is missing \'{}\' column.'.format(
-                input_file, required_column_title)
+            msg = f'Given input file \'{input_file}\' is missing \'{required_column_title}\' column.'
             raise argparse.ArgumentTypeError(msg)
 
     if ('output_ndx' not in column_titles) and ('output_pdb' not in column_titles):
-        msg = 'Given input file \'{}\' is missing both columns \'output_ndx\' and \'output_pdb\'. At least one of them is required.'.format(
-            input_file)
+        msg = f'Given input file \'{input_file}\' is missing both columns \'output_ndx\' and \'output_pdb\'. At least one of them is required.'
         raise argparse.ArgumentTypeError(msg)
 
     for title in column_titles:
@@ -179,7 +184,7 @@ def split_inputfile(lines: List[str], n_columns: int) -> Tuple[int, List[List[st
     return n_pdbs, input_matrix
 
 
-def read_columns_and_rows(lines: List[str], input_file: str, funcname: str):
+def read_columns_and_rows(lines: List[str], input_file: pathlib.Path, funcname: str):
     """
     Read the input file content and return a dictionary of the data.
 
@@ -187,7 +192,7 @@ def read_columns_and_rows(lines: List[str], input_file: str, funcname: str):
     -----------
     lines: list[str]
         List of the lines in the input file.
-    input_file: str
+    input_file: Path
         Path to the input file.
     funcname: str
         The name of the running command, should be "align" or "fit".
@@ -198,22 +203,25 @@ def read_columns_and_rows(lines: List[str], input_file: str, funcname: str):
         The dictionary with the input data
     """
 
-    column_dict, n_columns = check_required_column_titles_exits(
-        lines[0], input_file, f"required_{funcname}")
+    column_dict, n_columns = check_required_column_titles_exits(lines[0],
+                                                                input_file,
+                                                                f"required_{funcname}")
 
     n_pdbs, input_matrix = split_inputfile(lines, n_columns)
 
-    # check that input files are readable
-    input_pdbs = input_matrix[column_dict['input_pdb']]
-    for input_pdb in input_pdbs:
-        is_file_readable(input_pdb)
-
     inputdata = {}
-    for key in __col_info['allowed_columns']:
+    for key in __col_info[f"used_{funcname}"]:
         if (key in column_dict):
             inputdata[key] = input_matrix[column_dict[key]]
+            if (key in __col_info["paths"]):
+                inputdata[key] = [pathlib.Path(item)
+                                  for item in inputdata[key]]
         else:
             inputdata[key] = None
+
+    # check that input files are readable
+    input_pdbs = [is_file_readable(input_pdb)
+                  for input_pdb in inputdata["input_pdb"]]
 
     inputdata["id"] = []
     for i in range(n_pdbs):
@@ -226,37 +234,39 @@ def read_columns_and_rows(lines: List[str], input_file: str, funcname: str):
                 input_pdbs, inputdata[key])}
 
     # set selections to "all" if needed
-    if inputdata["selection"] is None:
+    if "selection" in inputdata and inputdata["selection"] is None:
         inputdata["selection"] = ["all" for p in input_pdbs]
 
     # create universes and use selection strings
     univs = {}
-    records = []
-    subsets = []
-    for i, (pdb, sel) in enumerate(zip(input_pdbs, inputdata["selection"])):
-        if (pdb not in univs):
-            univs[pdb] = mda.Universe(pdb)
-
-        u = univs[pdb]
-
-        subset = u.select_atoms(sel)
-        if (len(subset) == 0):
-            msg = 'Selection of line {} ("{}") is empty'.format(
-                i+1, sel)
-            raise argparse.ArgumentTypeError(msg)
-        subsets.append(subset)
-
-        record = subset.residues.sequence(id=inputdata["id"][i])
-        records.append(record)
+    for pdb in input_pdbs:
+        if pdb not in univs:
+            univs[pdb] = mda.Universe(str(pdb))
 
     inputdata["univ"] = univs
-    inputdata["subset"] = subsets
-    inputdata["record"] = records
+
+    if (funcname == "align"):
+        records = []
+        subsets = []
+        for i, (pdb, sel) in enumerate(zip(input_pdbs, inputdata["selection"])):
+            u = univs[pdb]
+
+            subset = u.select_atoms(sel)
+            if (len(subset) == 0):
+                msg = f'Selection of line {i+1} ("{sel}") is empty'
+                raise argparse.ArgumentTypeError(msg)
+            subsets.append(subset)
+
+            record = subset.residues.sequence(id=inputdata["id"][i])
+            records.append(record)
+
+        inputdata["subset"] = subsets
+        inputdata["record"] = records
 
     return inputdata
 
 
-def input_file_type(input_file: str, command: str) -> dict:
+def input_file_type(input_file: pathlib.Path, command: str) -> dict:
     """
     A file "type" for argparse. Reads and checks the given input file,
     returning its contents as a dictionary.
@@ -264,7 +274,7 @@ def input_file_type(input_file: str, command: str) -> dict:
 
     is_file_readable(input_file)
 
-    with open(input_file) as file:
+    with input_file.open() as file:
 
         lines = []
         for line in file:
@@ -280,7 +290,7 @@ def wrap_input_file_type(command: str) -> Callable[[str], dict]:
     E.g. to get the input for fit, give wrap_input_file_type("fit") as a type
     to argparse.
     """
-    return lambda input_file: input_file_type(input_file, command)
+    return lambda input_file: input_file_type(pathlib.Path(input_file), command)
 
 
 def temporary_directory(temp: str):
@@ -292,8 +302,8 @@ def temporary_directory(temp: str):
     try:
         temp_path.mkdir(exist_ok=True)
     except Exception as err:
-        msg = 'Error occurred while trying to make sure temporary directory exists: {}\nMake sure its parents exist and are writable'.format(
-            err)
+        msg = f'Error occurred while trying to make sure temporary directory exists: {err}\n' \
+            'Make sure its parents exist and is writable'
         raise argparse.ArgumentTypeError(msg)
 
     test_file = temp_path / f'apples2apples_test_file_{os.getpid()}.txt'
@@ -302,11 +312,10 @@ def temporary_directory(temp: str):
             pass
         os.remove(test_file)
     except Exception as err:
-        msg = 'Error occurred while trying to write and remove a test file in the given temporary directory: {}'.format(
-            err)
+        msg = 'Error occurred while trying to write and remove a test file in the given temporary directory: {err}'
         raise argparse.ArgumentTypeError(msg)
 
-    return temp
+    return temp_path
 
 
 def not_aligned_selection(sel: str):

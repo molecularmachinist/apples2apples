@@ -98,6 +98,12 @@ def create_align_subparser(subparsers: "argparse._SubParsersAction[argparse.Argu
                         dest="print_sels", action="store_true",
                         help="Print the selections to stdout.")
 
+    msg = "Do not make the parent directories for output files even if they don't exist. " \
+        "Does not affect the temporary directory, which will always be made."
+    parser.add_argument("--no-mkdir",
+                        dest="make_dirs", action="store_false",
+                        help=msg)
+
     parser.set_defaults(**kwargs)
 
     return parser
@@ -121,6 +127,10 @@ def create_fit_subparser(subparsers: "argparse._SubParsersAction[argparse.Argume
     msg = 'Reference frame used for the alignment. The reference is taken from the first pdb listed in the input.'
     parser.add_argument('-r', '--ref', metavar="N", dest='ref_frame',
                         type=inout.temporary_directory, help=msg, default=".")
+
+    parser.add_argument("--no-mkdir",
+                        dest="make_dirs", action="store_false",
+                        help="Do not make the parent directories for output files even if they don't exist.")
 
     parser.set_defaults(ref_frame=0, **kwargs)
 
