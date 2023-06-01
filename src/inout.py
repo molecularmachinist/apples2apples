@@ -229,9 +229,9 @@ def read_columns_and_rows(lines: List[str], input_file: pathlib.Path, funcname: 
 
     # These are needed as dicts
     for key in ("input_xtc", "output_traj"):
-        if key in column_dict:
-            inputdata[key] = {pdb: trj for pdb, trj in zip(
-                input_pdbs, inputdata[key])}
+        if key in inputdata:
+            inputdata[key] = {pdb: trj for pdb, trj in
+                              zip(input_pdbs, inputdata[key])}
 
     # set selections to "all" if needed
     if "selection" in inputdata and inputdata["selection"] is None:
