@@ -23,7 +23,7 @@ def ordinal_str(i: int) -> str:
     return f"{i}th"
 
 
-def compressed_resid_list(resids: List[str]) -> str:
+def compressed_resid_list(resids: List[int]) -> str:
     """
     Takes a list of ints and returns the compressed ranges. Does not sort the input.
     e.g.
@@ -31,6 +31,8 @@ def compressed_resid_list(resids: List[str]) -> str:
     """
     if (len(resids) == 0):
         return ""
+    if (len(resids) == 1):
+        return f" {resids[0]}"
     out = ""
     begin_cont = resids[0]
     for iprev, r in enumerate(resids[1:]):
