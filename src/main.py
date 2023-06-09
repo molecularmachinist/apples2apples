@@ -25,9 +25,16 @@ def main_align(args: argparse.Namespace):
 
     seqs = apples2apples.aligned_sequences(input_data["record"], temp)
 
-    resids = [[r.resid for r in sel.residues] for sel in input_data["subset"]]
+    if (args.resid):
+        resids = [[r.resid for r in sel.residues]
+                  for sel in input_data["subset"]]
+    else:
+        resids = [[r.resindex for r in sel.residues]
+                  for sel in input_data["subset"]]
 
-    sels = apples2apples.find_apples2apples(seqs, resids, not_aligned_sel)
+    sels = apples2apples.find_apples2apples(
+        seqs, resids, not_aligned_sel, args.resid
+    )
 
     common_sels = []
     for i, (sel, subset) in enumerate(zip(sels, input_data["subset"])):

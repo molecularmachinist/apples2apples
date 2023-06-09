@@ -98,6 +98,12 @@ def create_align_subparser(subparsers: "argparse._SubParsersAction[argparse.Argu
                         dest="print_sels", action="store_true",
                         help="Print the selections to stdout.")
 
+    msg = "Use \"resid\" instead of \"resindex\" as the selection token. " \
+          "This results in a selection string, whcih is more portable to other systems" \
+          " as it uses the residue numbers instead of internal indices. Do not use when " \
+          "selections include duplicate residue numbers."
+    parser.add_argument('--resid', action="store_true", help=msg)
+
     msg = "Do not make the parent directories for output files even if they don't exist. " \
         "Does not affect the temporary directory, which will always be made."
     parser.add_argument("--no-mkdir",

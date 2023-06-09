@@ -56,7 +56,7 @@ def aligned_sequences(records: List[SeqRecord], temp: pathlib.Path):
     return read_seqs_from_aligment_file(aligned_fasta_file)
 
 
-def find_apples2apples(seqs: List[str], resids: List[List[int]], not_aligned_sel: str) -> List[str]:
+def find_apples2apples(seqs: List[str], resids: List[List[int]], not_aligned_sel: str, use_resid=False) -> List[str]:
     """
     Find the MDAnalysis selection strings from the aligned sequences, which will results in atom
     selections of the same size.
@@ -77,6 +77,8 @@ def find_apples2apples(seqs: List[str], resids: List[List[int]], not_aligned_sel
     """
 
     indeces = np.zeros(len(seqs), dtype=int)
+
+    token = "resid" if use_resid else "resindex"
 
     backbones = [[] for _ in seqs]
     whole_ress = [[] for _ in seqs]
@@ -108,18 +110,25 @@ def find_apples2apples(seqs: List[str], resids: List[List[int]], not_aligned_sel
             if not whole_res:
                 sel = ''
             else:
-                sel = 'resid {}'.format(
-                    utils.compressed_resid_list(whole_res))
+                sel = '{} {}'.format(
+                    token,
+                    utils.compressed_resid_list(whole_res)
+                )
 
         elif not whole_res:
-            sel = '{} and resid {}'.format(
+            sel = '{} and {} {}'.format(
                 not_aligned_sel,
-                utils.compressed_resid_list(backbone))
+                token,
+                utils.compressed_resid_list(backbone)
+            )
         else:
-            sel = '({} and resid {}) or (resid {})'.format(
+            sel = '({} and {} {}) or ({} {})'.format(
                 not_aligned_sel,
+                token,
                 utils.compressed_resid_list(backbone),
-                utils.compressed_resid_list(whole_res))
+                token,
+                utils.compressed_resid_list(whole_res)
+            )
 
         sels.append(sel)
 
