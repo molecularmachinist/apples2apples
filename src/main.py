@@ -109,7 +109,6 @@ def main():
     """
     parser, subparsers = cmd_line.create_main_parser()
 
-    cmd_line.create_input_syntax_subparser(subparsers)
     cmd_line.create_align_subparser(subparsers, func=main_align)
     cmd_line.create_fit_subparser(subparsers, func=main_fit)
 

@@ -265,31 +265,28 @@ def read_columns_and_rows(lines: List[str], input_file: pathlib.Path, funcname: 
     return inputdata
 
 
-def input_file_type(input_file: pathlib.Path, command: str) -> dict:
+def input_pdb_type(input_file: str) -> pathlib.Path:
     """
     A file "type" for argparse. Reads and checks the given input file,
     returning its contents as a dictionary.
     """
-
-    is_file_readable(input_file)
-
-    with input_file.open() as file:
-
-        lines = []
-        for line in file:
-            if line.strip() and (not line.lstrip().startswith("#")):
-                lines.append(line)
-
-    return read_columns_and_rows(lines, input_file, command)
+    input_path = pathlib.Path(input_file)
+    if (input_path.suffix != ".pdb"):
+        raise argparse.ArgumentTypeError("Input pdb should have '.pdb' suffix. "
+                                         f"Has '{input_path.suffix}'")
+    return is_file_readable(pathlib.Path(input_path))
 
 
-def wrap_input_file_type(command: str) -> Callable[[str], dict]:
+def output_ndx_type(output_file: str) -> pathlib.Path:
     """
-    A wrapper for the input_file_type, allowing to specify the command.
-    E.g. to get the input for fit, give wrap_input_file_type("fit") as a type
-    to argparse.
+    A file "type" for argparse. Reads and checks the given input file,
+    returning its contents as a dictionary.
     """
-    return lambda input_file: input_file_type(pathlib.Path(input_file), command)
+    output_path = pathlib.Path(output_file)
+    if (output_path.suffix != ".ndx"):
+        raise argparse.ArgumentTypeError("Output index should have '.ndx' suffix. "
+                                         f"Has '{output_path.suffix}'")
+    return is_file_readable(pathlib.Path(output_path))
 
 
 def temporary_directory(temp: str):

@@ -26,50 +26,6 @@ def create_main_parser() -> Tuple[argparse.ArgumentParser,
     return parser, subparsers
 
 
-def create_input_syntax_subparser(subparsers: "argparse._SubParsersAction[argparse.ArgumentParser]",
-                                  **kwargs) -> argparse.ArgumentParser:
-    """
-    Create the subparser for the input_syntax command. **kwargs are added to set_defaults
-    """
-    syntax = '''
-# Input file example.
-# The symbol # is used for comment lines.
-# The first non-empty line after these comments includes column titles.
-# The columns are separated from each other by pipe symbol |.
-# The columns input_pdbs, first_residue_index and output_ndx
-# are required. In the input_pdbs at least 2 pdb files are required.
-# If selections are not given, they are assumed to be "all".
-# See  https://docs.mdanalysis.org/stable/documentation_pages/selections.html
-# for syntax of the selections column.
-# The columns output_ndx and output_pdb are to specify output files in alignment,
-# while the former is used as input in fitting.
-# Note that the pipe symbols don't have to be aligned.
-# The below line marks which columns are used by which command, a=align and f=fit.
-# Added asterisk means its required for that command
-
-# a* f*   | f*        |  a                       | a* f*      | a          | f*
-
-input_pdb | input_xtc |  selection               | output_ndx | output_pdb | output_traj
-1.pdb     | 1.xtc     |  segid A and resid 40:60 | 1.ndx      | 1out.pdb   | 1aligned.xtc
-2.pdb     | 2.xtc     |  segid B and resid 10:55 | 2.ndx      | 2out.pdb   | 2aligned.xtc
-3.pdb     | 3.xtc     |  protein                 | 3.ndx      | 3out.pdb   | 3aligned.xtc
-    '''
-
-    kwargs["func"] = lambda args: print(syntax, file=args.fout)
-
-    help = "Print an example of the input file for the align and fit commands."
-    parser = subparsers.add_parser("input_syntax", help=help, description=help)
-
-    msg = 'File to write the example syntax to. By default standard output.'
-    parser.add_argument('-o', metavar="FNAME", dest='fout',
-                        type=argparse.FileType("w"),
-                        default=sys.stdout, help=msg)
-
-    parser.set_defaults(**kwargs)
-
-    return parser
-
-
 def create_align_subparser(subparsers: "argparse._SubParsersAction[argparse.ArgumentParser]",
                            **kwargs) -> argparse.ArgumentParser:
     """
@@ -78,10 +34,20 @@ def create_align_subparser(subparsers: "argparse._SubParsersAction[argparse.Argu
     help = "Align sequences and find common atoms.\nIn other words, find out how to compare apples to oranges."
     parser = subparsers.add_parser("align", help=help, description=help)
 
-    msg = "Input file. For the example syntax run 'apples2apples input_syntax'."
-    parser.add_argument('-i', metavar="FNAME", dest='input_file',
-                        type=inout.wrap_input_file_type("align"),
+    msg = "Input pdb files, one for each sequence. Specify duplicates to read from same file (remember to set selection)."
+    parser.add_argument('-i', "--input-pdbs", metavar="*.pdb", dest='input_pdbs',
+                        type=inout.input_pdb_type, nargs="+",
                         help=msg, required=True)
+
+    msg = "Selections, one for each sequence Or a single one to use for all pdbs."
+    parser.add_argument('-s', "--selections", metavar="sel", dest='selections',
+                        type=str, nargs="*",
+                        help=msg, default=["all"])
+
+    msg = "Output indexes. Must have same number of files as input pdbs, or be left out. By default will be numbered 1.ndx, 2.ndx, etc."
+    parser.add_argument('-o', "--ouput-indexes", metavar="*.ndx", dest='ouput_ndxs',
+                        type=inout.output_ndx_type, nargs="*",
+                        help=msg, default=None)
 
     msg = 'Temporary directory for aligment files.'
     parser.add_argument('-t', '--temp', metavar="DIR", dest='temp_directory',
@@ -90,7 +56,7 @@ def create_align_subparser(subparsers: "argparse._SubParsersAction[argparse.Argu
     msg = "Selection for atoms when aligned residues are not the same. " \
           "Options are either the whole backbone \'backbone\' or the " \
           "alpha-carbon atoms \'CA\'. Default is \'CA\'."
-    parser.add_argument('-s', metavar="CA|backbone", dest='not_aligned_sel',
+    parser.add_argument('-n', "--not-aligned-sel", metavar="CA|backbone", dest='not_aligned_sel',
                         type=inout.not_aligned_selection,
                         default='ca', help=msg)
 
@@ -110,9 +76,24 @@ def create_align_subparser(subparsers: "argparse._SubParsersAction[argparse.Argu
                         dest="make_dirs", action="store_false",
                         help=msg)
 
-    parser.set_defaults(**kwargs)
+    parser.set_defaults(check_func=check_align_options, **kwargs)
 
     return parser
+
+
+def check_align_options(args: argparse.Namespace):
+    if (len(args.input_pdbs) < 2):
+        raise argparse.ArgumentTypeError(
+            "At least two sequences should be specified, but only one was given."
+        )
+    if (len(args.selections) > 1 and len(args.selections) != len(args.input_pdbs)):
+        raise argparse.ArgumentTypeError(
+            f"Number of selections ({len(args.selections)}) does not match number of pdbs ({len(args.input_pdbs)})"
+        )
+    if ((args.ouput_ndxs is not None) and len(args.ouput_ndxs) != len(args.input_pdbs)):
+        raise argparse.ArgumentTypeError(
+            f"Number of output indexes ({len(args.ouput_ndxs)}) does not match number of pdbs ({len(args.input_pdbs)})"
+        )
 
 
 def create_fit_subparser(subparsers: "argparse._SubParsersAction[argparse.ArgumentParser]",
