@@ -1,9 +1,8 @@
 import argparse
 import os
 import pathlib
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Tuple
 import MDAnalysis as mda
-from Bio.SeqRecord import SeqRecord
 
 
 def read_ndx(ndx: pathlib.Path, verbose=False) -> Dict[str, List[int]]:

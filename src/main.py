@@ -1,5 +1,4 @@
 from warnings import catch_warnings, simplefilter
-import MDAnalysis as mda
 import argparse
 
 from . import cmd_line
